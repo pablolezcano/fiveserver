@@ -22,4 +22,4 @@ jobs:
 
       - name: Sync with server
         run: |
-          ssh messi@181.230.13.38 "cd /test-pes && git pull origin main"
+          ssh messi@181.230.13.38 "cd /test-pes/ && git pull origin main"

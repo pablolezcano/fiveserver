@@ -1,4 +1,4 @@
-name: Sync with On-Premise Server
+name: 01-Sync with On-Premise Server
 
 on:
   push:

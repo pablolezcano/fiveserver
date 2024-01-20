@@ -6,6 +6,7 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN groupadd -g 3066 five && useradd -r -u 3066 -g five five
 
 RUN apt-get update && apt-get install -y \
+  pkg-config \
   libmysqlclient-dev \
   python3 python3-venv python3-dev \
   gcc \

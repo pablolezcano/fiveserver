@@ -28,7 +28,7 @@ Notable features:
 * Administrative web-interface
 * REST api to retrieve live stats
 
-
+![Alt text](images/image.png)
 
 INSTALL
 =======

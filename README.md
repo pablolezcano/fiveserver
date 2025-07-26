@@ -1,6 +1,6 @@
 ## En desarrollo.
 
-# Servidor PES6/WE2007 - Guía de Despliegue
+# Servidor PES6/WE2007
 
 Este repositorio contiene un servidor independiente para Pro Evolution Soccer 6 y Winning Eleven 2007, basado en Fiveserver.
 

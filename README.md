@@ -1,113 +1,125 @@
 ## En desarrollo.
 
-Fiveserver
-==========
-Copyright (C) 2011-2021 juce and reddwarf
-License: BSD-style
+# Servidor PES6/WE2007 - Guía de Despliegue
 
+Este repositorio contiene un servidor independiente para Pro Evolution Soccer 6 y Winning Eleven 2007, basado en Fiveserver.
 
+## 📋 Prerrequisitos
 
-ABOUT
-=====
+- Docker instalado
+- Puertos disponibles: 3306 (MySQL), 8190 (HTTP), 8191 (HTTPS), 10881 (PES6)
 
+## 🚀 Despliegue
 
-Fiveserver is a pure-Python implementation of network server for the
-following games:
+### 1. Base de datos MySQL
 
-Pro Evolution Soccer 5 
-Winning Eleven 9
-Winning Eleven 9 Liveware Evolution
-Pro Evolution Soccer 6
-Winning Eleven 2007
+**Construir la imagen de la base de datos:**
+```bash
+cd sql
+docker build -t pes6-db .
+```
 
+**Desplegar el contenedor de la base de datos:**
+```bash
+docker run -dp 3306:3306 --net=host --name=pes6-mysql pes6-db
+```
 
-Notable features:
+### 2. Servidor PES6
 
-* Full support for network play, including 2-vs-2 for PES6
-* Persistent accounts and full game statistics, stored in MySQL database
-* Administrative web-interface
-* REST api to retrieve live stats
+**Construir la imagen del servidor:**
+```bash
+docker build -f Dockerfile -t fiveserver .
+```
 
-![Alt text](images/image.png)
+**Desplegar el contenedor del servidor:**
+```bash
+docker run -d --net=host --name=sixserver --restart=always fiveserver
+```
 
+## 🔧 Gestión del Servidor
 
+### Comandos útiles
 
-INSTALL
-=======
+**Ver logs en tiempo real:**
+```bash
+# Logs de la base de datos
+docker logs -f pes6-mysql
 
+# Logs del servidor
+docker logs -f sixserver
+```
 
-The following two-step installation sequence should work as is on any Unix OS,
-such as Linux (any flavour), FreeBSD or Mac OSX. If you are using Windows, then
-it is recommended that you download a pre-built Windows-specific package from 
-http://sites.google.com/site/fiveservercom/
+**Detener servicios:**
+```bash
+docker stop sixserver pes6-mysql
+```
 
-1. Python 3 and dependencies
-If you are on modern Debian or Ubuntu Linux then this should install everything
-you need:
+**Iniciar servicios:**
+```bash
+docker start pes6-mysql
+docker start sixserver
+```
 
-    sudo apt-get -y update
-    sudo apt-get install libmysqlclient-dev python3 python3-venv python3-dev gcc make
+**Reiniciar todo el stack:**
+```bash
+# Detener y eliminar contenedores
+docker stop sixserver pes6-mysql
+docker rm sixserver pes6-mysql
 
-Otherwise, you will need to use your OS tools to install:
+# Reconstruir y redesplegar
+cd sql
+docker build -t pes6-db .
+docker run -dp 3306:3306 --net=host --name=pes6-mysql pes6-db
 
-    * Python 3
-    * libmysqlclient.
-    * gcc or clang
-    * make
+cd ..
+docker build -f Dockerfile -t fiveserver .
+docker run -d --net=host --name=sixserver --restart=always fiveserver
+```
 
+## 🌐 URLs de Acceso
 
-2. Return to fiveserver source directory and install Python environment and
-packages by issuing this command (as yourself, not root):
+| Servicio | URL | Credenciales |
+|----------|-----|--------------|
+| **Registro de usuarios** | http://localhost:8190 | - |
+| **Panel de administración** | https://localhost:8191 | Usuario: `fives`<br>Password: `fives` |
+| **Juego PES6** | Puerto 10881 | - |
+| **Base de datos MySQL** | localhost:3306 | Usuario: `sixserver`<br>Password: `proevo` |
 
-    make install
+## 🎮 Configuración del Juego
 
-This will create an isolated Python environment and install all Python packages
-needed to run Fiveserver/Sixserver
+1. Inicia PES6/WE2007
+2. Ve a "Network" → "Network Settings"
+3. Configura la IP del servidor: `<tu-ip-servidor>`
+4. Registra un usuario en: http://localhost:8190
+5. ¡Conecta y juega!
 
+## 📊 Características
 
+- ✅ Soporte completo para PES6 y WE2007
+- ✅ Partidas multijugador 1v1 y 2v2
+- ✅ Sistema de estadísticas persistente
+- ✅ Rankings y clasificaciones
+- ✅ Chat en el lobby
+- ✅ Panel de administración web
+- ✅ Base de datos MySQL integrada
 
-CONFIGURE MYSQL DATABASES
-=========================
+## ⚠️ Notas Importantes
 
+- **Orden de despliegue**: Primero la base de datos, luego el servidor
+- El servidor usa `--net=host` para compatibilidad con el protocolo del juego
+- Los datos se almacenan en la base de datos MySQL
+- El panel de administración usa HTTPS con certificado autofirmado
 
-The following instructions assume that you can use a command-line mysql client 
-utility to connect to your MySQL server with a root account.
+## 🐛 Solución de Problemas
 
-For Fiveserver (PES5/WE9/WE9LE), you will need to create a database and grant
-appropriate permissions. If you use default database name and login/password 
-(you can change all of those in ./etc/conf/fiveserver.yaml), then it would be this:
+**El servidor no inicia:**
+- Verifica que la base de datos esté corriendo
+- Revisa los logs: `docker logs sixserver`
 
+**No puedo conectarme desde el juego:**
+- Verifica que el puerto 10881 esté abierto
+- Confirma la IP del servidor en la configuración del juego
 
-    create database fiveserver;
-    create user 'fiveserver'@'%' identified by 'we9le';
-    grant select, insert, update on sixserver.* to 'fiveserver'@'%';
-    use fiveserver;
-    source ./sql/schema.sql
-
-
-For Sixserver (PES6/WE2007), you will need to create a database and grant
-appropriate permissions. If you use default database name and login/password 
-(you can change all of those in ./etc/conf/sixserver.yaml), then it would be this:
-
-    create database sixserver;
-    create user 'sixserver'@'%' identified by 'proevo';
-    grant select, insert, update on sixserver.* to 'sixserver'@'%';
-    use sixserver;
-    source ./sql/schema6.sql
-
-
-
-USAGE
-=====
-
-
-The service.sh script can be used to run both services (fiveserver and sixserver) or
-to launch them in the background. Just run the script without any arguments to see
-all available options:
-
-    ./service.sh 
-    Usage ./service.sh {fiveserver|sixserver} {run|start|stop|status}
-
-For example, to start fiveserver service, you would do:
-
-    ./service.sh fiveserver start
+**Error en la interfaz web:**
+- Asegúrate de que los puertos 8190 y 8191 no estén ocupados
+- Prueba acceder desde localhost primero
